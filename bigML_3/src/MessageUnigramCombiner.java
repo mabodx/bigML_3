@@ -8,8 +8,8 @@ import java.util.regex.Pattern;
 
 
 public class MessageUnigramCombiner {
-  static public Pattern pair_pattern = Pattern.compile("(\\w+)\\s+(\\d+\\s+\\d+)"); // "word Bx Cx"
-  static public Pattern bigram_pattern = Pattern.compile("(\\w+)\\s+(\\w+\\s+\\w+)\\s+(\\W)");  //"word1  word1 word2  1/2"
+  //static public Pattern pair_pattern = Pattern.compile("(\\w+)\\s+(\\d+\\s+\\d+)"); // "word Bx Cx"
+  //static public Pattern bigram_pattern = Pattern.compile("(\\w+)\\s+(\\w+\\s+\\w+)\\s+(\\W)");  //"word1  word1 word2  1/2"
   
   static public void main(String[] args) throws IOException{
     BufferedReader reader = new BufferedReader (new InputStreamReader(System.in)); /* message.txt unigram_processed.txt */
@@ -19,30 +19,22 @@ public class MessageUnigramCombiner {
     String line = reader.readLine();  /* skip reading total word occurrence */
     writer.write(line);
     writer.write('\n');
-    Matcher matcher = null;
+    
     line = reader.readLine();
     while(line  !=null){
-      matcher = pair_pattern.matcher(line);
-      String attr = "", val = "";
-      if (matcher.matches()){
-        attr = matcher.group(1);
-        val = matcher.group(2);
-        //System.out.println(attr + val);
-      }
+      String [] pair = line.split("\\s+");
+      String attr = pair[0];
+      String bx = pair[2], cx = pair[3];
+      
       while((line = reader.readLine() )!=null){
-        matcher = bigram_pattern.matcher(line);
-        if (matcher.matches()){
-          //System.out.println(attr + "\t"+matcher.group(1));
-//          if (!attr.equals( matcher.group(1))){
-//            continue;
-//          }
-          String phrase = matcher.group(2);
-          String flag = matcher.group(3);   /* + for xy, - for yx */
-          String comb = String.format("%s %s %s %s\n", phrase, flag, flag, val);
-          writer.write(comb);
-        } else {
+        
+        String [] msg = line.split("\t");
+        if (msg.length > 3) 
           break;
-        }
+        String flag = msg[2];
+        String[] phrases = msg[1].split("\\s+");
+        String combo = String.format("%s-%s\t%s\t%s\t%s\n", phrases[0], phrases[1], flag, bx, cx);
+        writer.write(combo);
       }
       
     }

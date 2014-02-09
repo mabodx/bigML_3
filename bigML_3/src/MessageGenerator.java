@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 
 
 public class MessageGenerator {
-  static public Pattern bi_pattern = Pattern.compile("(\\w+)\\s+(\\w+)\\s+\\d+\\s+\\d+");
   
   static public void main(String[] args) throws IOException{
     BufferedReader reader = new BufferedReader (new InputStreamReader(System.in));
@@ -16,20 +15,19 @@ public class MessageGenerator {
     
     
     String line = null; /* skip reading total occurrence */
-    Matcher matcher = null;
+  
     while((line = reader.readLine()) !=null){
-      matcher = bi_pattern.matcher(line);
-      if (matcher.matches()){
-        String tk1 = matcher.group(1);
-        String tk2 = matcher.group(2);
-        //String info = matcher.group(3);
-        String comb = String.format("%s %s %s +\n", tk1, tk1, tk2); /* + for xy, - for yx */
-        writer.write(comb);
-        comb = String.format("%s %s %s -\n", tk2, tk1, tk2); /* + for xy, - for yx */
-        writer.write(comb);
-                
-      }
+      String [] tks = line.split("\\s+");
+      String [] phrases = tks[0].split("-");
+      if (phrases.length<2)
+        continue;
+      String comb = String.format("%s\t%s %s\t1\n", phrases[0], phrases[0], phrases[1]); /* + for xy, - for yx */
+      writer.write(comb);
+      comb = String.format("%s\t%s %s\t2\n", phrases[1], phrases[0], phrases[1]); /* + for xy, - for yx */
+      writer.write(comb);
+              
     }
+   
     reader.close();
     writer.close();
   }

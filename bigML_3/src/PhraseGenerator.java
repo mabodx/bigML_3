@@ -12,11 +12,7 @@ import java.util.regex.Pattern;
 
 
 public class PhraseGenerator {
-  static public Pattern x_pattern = Pattern.compile("(\\w+\\s+\\w+)\\s+\\+\\s\\+\\s+(\\d+)\\s+(\\d+)"); // "phrase + a b "
-  static public Pattern y_pattern = Pattern.compile("(\\w+\\s+\\w+)\\s+\\-\\s\\-\\s+(\\d+)\\s+(\\d+)"); // "phrase + a b"
-  static public Pattern xy_pattern = Pattern.compile("(\\w+\\s+\\w+)\\s+(\\d+)\\s+(\\d+)"); // "phrase,a,b"
-  static public Pattern uni_pattern = Pattern.compile("(\\W+)\\s+(\\d+)\\s+(\\d+)"); // "*,a,b"
-  static public Pattern bi_pattern = Pattern.compile("(\\W+\\s+\\W+)\\s+(\\d+)\\s+(\\d+)"); // "* *,a,b"
+  
   static long tot_Bx = 0, tot_Cx = 0, tot_Bxy = 0, tot_Cxy = 0;
   static int top = 20;
   
@@ -48,14 +44,11 @@ public class PhraseGenerator {
     }
     
   }
-  static private String parseAttrValPair(String line, Pattern pattern, long[] freq){
-    Matcher matcher = pattern.matcher(line);
-    if (matcher.matches()){
-      freq[0] = Long.parseLong(matcher.group(2));
-      freq[1] = Long.parseLong(matcher.group(3));
-      return matcher.group(1);
-    }
-    return null;
+  static private String parseAttrValPair(String line, long[] freq){
+    String[] tks = line.split("\\s+");
+    freq[0] = Long.parseLong(tks[tks.length-2]);
+    freq[1] = Long.parseLong(tks[tks.length-1]);
+    return tks[0];
   }
   static double KL(double p, double q){
     if (p<=0 || q<=0) 
@@ -85,37 +78,40 @@ public class PhraseGenerator {
     
     String line = reader.readLine();
     long[] freq = new long[2];
-    parseAttrValPair(line, bi_pattern, freq);
-    tot_Bxy = freq[0];
-    tot_Cxy = freq[1];
+    parseAttrValPair(line, freq);
+    tot_Bx = freq[0];
+    tot_Cx = freq[1];
+
     
     
     line = reader.readLine();
-    parseAttrValPair(line, uni_pattern, freq);
-    tot_Bx = freq[0];
-    tot_Cx = freq[1];
+    parseAttrValPair(line, freq);
+    tot_Bxy = freq[0];
+    tot_Cxy = freq[1];
     
     while ((line = reader.readLine()) != null){
-      parseAttrValPair(line, x_pattern, freq);
-      long Bx = freq[0];
-      long Cx = freq[1];
+      parseAttrValPair(line, freq);
+      long Bxy = freq[0];
+      long Cxy = freq[1];
+
       
       line = reader.readLine();
-      parseAttrValPair(line, y_pattern, freq);
+      parseAttrValPair(line,  freq);
       long By = freq[0];
       long Cy = freq[1];
       
       line = reader.readLine();
-      String phrase = parseAttrValPair(line, xy_pattern, freq);
+      String phrase = parseAttrValPair(line, freq);
       //System.out.println(phrase);
-      long Bxy = freq[0];
-      long Cxy = freq[1];
+      long Bx = freq[0];
+      long Cx = freq[1];
       
       double phraseness = getPhraseness(Cx, Cy, Cxy);
       double informativeness = getInformativeness(Cxy, Bxy);
       double score = phraseness + informativeness;
       
       if (hfPhrases.size() < top){
+        
         hfPhrases.add(new PhraseScore(phrase, score, phraseness, informativeness));
       } else{
         PhraseScore ps = hfPhrases.peek();
@@ -131,7 +127,8 @@ public class PhraseGenerator {
     }
     while (!list.isEmpty()){
       PhraseScore ps = list.pop();
-      String output = String.format("%s\t%f\t%f\t%f", ps.phrase, ps.score, ps.phraseness, ps.informativeness);
+      String [] words = ps.phrase.split("-");
+      String output = String.format("%s %s\t%f\t%f\t%f", words[0], words[1], ps.score, ps.phraseness, ps.informativeness);
       System.out.println(output);
       
     }

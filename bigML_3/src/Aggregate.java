@@ -3,15 +3,14 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 
 public class Aggregate {
-  //static public String outputFile = "%s_processed.txt";
-  static public Pattern uni_pattern = Pattern.compile("(\\w+)\\s+(\\d+)\\s+(\\d+)");
-  static public Pattern bi_pattern = Pattern.compile("(\\w+\\s+\\w+)\\s+(\\d+)\\s+(\\d+)");
+
   static final public int  corpus_year = 1990;
   
   static public void main (String[] args) throws IOException{
@@ -33,18 +32,40 @@ public class Aggregate {
     BufferedReader reader = new BufferedReader (new InputStreamReader(System.in));
     BufferedWriter writer = new BufferedWriter (new OutputStreamWriter(System.out));
     
-    Pattern pattern = type==0? uni_pattern: bi_pattern;
-    
-    String line = reader.readLine();
-    Matcher matcher = pattern.matcher(line);
-    String last = "";
     long tot_bfreq = 0, tot_cfreq=0;
     long b_freq = 0, c_freq = 0;
-    if (matcher.matches()){
-      last = matcher.group(1);
-      int year = Integer.parseInt(matcher.group(2));
-      long n = Long.parseLong(matcher.group(3));
+    String line = reader.readLine();
+    String[] tks = line.split("\\s+");
+    //System.out.println(Arrays.toString(tks));
+    String last = tks.length==3? tks[0]: String.format("%s-%s", tks[0], tks[1]);
+    //String last = tks[0];
+
+    int year = Integer.parseInt(tks[1+type]);
+    long n = Long.parseLong(tks[2+type]);
+
+    if (year< corpus_year){
+      b_freq += n;
+      tot_bfreq += n;
+    } else {
+      c_freq += n;
+      tot_cfreq += n;
+    }
+    
+    
+    while ((line = reader.readLine()) != null){
+      tks = line.split("\\s+");
+      //System.out.println(Arrays.toString(tks));
+      String token = tks.length==3? tks[0]: String.format("%s-%s", tks[0], tks[1]);
+      year = Integer.parseInt(tks[1+type]);
+      n = Long.parseLong(tks[2+type]);
       
+      if (!token.equals(last)){
+        String output = String.format("%s\t0\t%d\t%d\n", last, b_freq, c_freq);
+        writer.write(output);
+        b_freq = 0;
+        c_freq = 0;
+        last = token;
+      }
       if (year< corpus_year){
         b_freq += n;
         tot_bfreq += n;
@@ -52,35 +73,12 @@ public class Aggregate {
         c_freq += n;
         tot_cfreq += n;
       }
-    }
-    
-    while ((line = reader.readLine()) != null){
-      matcher = pattern.matcher(line);
-      if (matcher.matches()){
-        String token = matcher.group(1);
-        int year = Integer.parseInt(matcher.group(2));
-        long n = Long.parseLong(matcher.group(3));
-        
-        if (!token.equals(last)){
-          String output = String.format("%s %d %d\n", last, b_freq, c_freq);
-          writer.write(output);
-          b_freq = 0;
-          c_freq = 0;
-          last = token;
-        }
-        if (year< corpus_year){
-          b_freq += n;
-          tot_bfreq += n;
-        } else {
-          c_freq += n;
-          tot_cfreq += n;
-        }
-      } //endif match
+  
     } // endwhile
-    String output = String.format("%s %d %d\n", last, b_freq, c_freq);
+    String output = String.format("%s\t0\t%d\t%d\n", last, b_freq, c_freq);
     writer.write(output);
-    output = type == 0? String.format("* %d %d\n", tot_bfreq, tot_cfreq): 
-                        String.format("* * %d %d\n", tot_bfreq, tot_cfreq);
+    output = type == 0? String.format("*\t%d\t%d\n", tot_bfreq, tot_cfreq): 
+                        String.format("**\t%d\t%d\n", tot_bfreq, tot_cfreq);
     writer.write(output);
     writer.flush();
     reader.close();
